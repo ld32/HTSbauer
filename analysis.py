@@ -164,4 +164,4 @@ macs2()
 wig()
 batch_wig()
 import log_parser
-log_parser.demultiplexing()
+log_parser.demultiplexing(ORIGINAL_FILE)
