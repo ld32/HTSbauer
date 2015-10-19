@@ -1,2 +1,5 @@
 .idea
 *.pyc
+log.out
+*.png
+*.pdf
