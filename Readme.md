@@ -9,7 +9,7 @@ the following files:
 * log_parser.py
 * BDGtoWIG.py
 * fastq_trimmer.py
-* a config file
+* a setup.cfg file (check example file)
 
 The output of the script will be in mochiview compatible *.wig files in the mochiview directory
 There are also two pdf containing some statistics of the script.
