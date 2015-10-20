@@ -1,8 +1,11 @@
 __author__ = 'Luis'
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-
+import sys
+ORIGINAL_FILE=sys.argv[1]
 
 class BarCodeSeq:
     total=0
@@ -41,8 +44,7 @@ def demultiplexing(title):
     for item in text:
         item.set_fontsize(14)
 
-    plt.savefig('demultiplexing.pdf')
-    plt.close()
+    fig.savefig('demultiplexing.pdf')
     mapped_unmapped(title)
 
 def mapped_unmapped(title):
@@ -50,9 +52,9 @@ def mapped_unmapped(title):
         for line in log_file:
             if line.startswith('# read'):
                 sample=int(line.split(' ')[-1].rstrip())
-                mapped=int(log_file.readline().split(' ')[-2])
-                unmapped=int(log_file.readline().split(' ')[-2])
-                duplicated=int(log_file.readline().split(' ')[-2])
+                mapped=int(next(log_file).split(' ')[-2])
+                unmapped=int(next(log_file).split(' ')[-2])
+                duplicated=int(next(log_file).split(' ')[-2])
                 for item in Barcode_Objects:
                     if item.totalreads==sample:
                         item.unique_reads=mapped
@@ -67,15 +69,18 @@ def mapped_unmapped(title):
     width=0.7
     fig, ax = plt.subplots(figsize=(8,10))
 
-    p1 = ax.barh(ind, [item.unique_reads for item in Barcode_Objects],   width, color='yellowgreen',label="Unique Reads")
+    p1 = ax.barh(ind, [item.unique_reads for item in Barcode_Objects],   width, color='yellowgreen',label="Unique Mapping")
     p2 = ax.barh(ind, [item.dup_reads for item in Barcode_Objects],   width,
               left=np.array([item.unique_reads for item in Barcode_Objects]),
-              color='gold',label='Duplicated Reads')
+              color='gold',label='Duplicated Mapping')
     p3 = ax.barh(ind, [item.unmapped_reads for item in Barcode_Objects], width, color='lightcoral',label="Unmapped Reads",
              left=np.array([item.unique_reads for item in Barcode_Objects])+np.array([item.dup_reads for item in Barcode_Objects]))
-    plt.yticks(ind+0.4,[item.name for item in Barcode_Objects],rotation='horizontal')
-    plt.title('Reads Alignment\nfor file {}'.format(title),fontsize=18)
-    plt.xlabel('Number of Reads Aligned',fontsize=16)
-    plt.legend(loc='best')
-    plt.savefig('mapping.pdf')
+    ax.set_yticks(list(ind+0.4))
+    ax.set_yticklabels([item.name for item in Barcode_Objects])
 
+    ax.set_title('Reads Alignment\nfor file {}'.format(title),fontsize=18)
+    ax.set_xlabel('Number of Reads Aligned',fontsize=16)
+    ax.legend(loc='best')
+    fig.savefig('mapping.pdf')
+
+demultiplexing(ORIGINAL_FILE)

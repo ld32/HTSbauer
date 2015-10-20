@@ -1,3 +1,4 @@
+#https://github.com/LuisSoares/fastq_parser
 #trimms fastq file sequences, removing barcode size
 #python3.3
 

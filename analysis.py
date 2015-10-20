@@ -150,7 +150,6 @@ def batch_wig():
 	for item in files:
 		os.rename(item,CURRENT_PATH+'/mochiview/'+os.path.basename(item))
 
-	
 DEMULT_PAR,BOWTIE_PAR,MACS2_PAR,BARCODES=parse_setup('setup.cfg')
 #print(CURRENT_PATH)
 #print(DEMULT_PAR,BOWTIE_PAR,MACS2_PAR,BARCODES)
@@ -163,5 +162,5 @@ sam_tools()
 macs2()
 wig()
 batch_wig()
-import log_parser
-log_parser.demultiplexing(ORIGINAL_FILE)
+
+subprocess.call('python2.7 log_parser.py {}'.format(ORIGINAL_FILE),shell=True)
