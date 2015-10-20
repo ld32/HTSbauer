@@ -11,5 +11,11 @@ the following files:
 * fastq_trimmer.py
 * a setup.cfg file (check example file)
 
+To Run the script:
+* Start your ssh session
+* Goto the Directory with your required files
+* run: "source analysis.sh <BAUER_CENTER_SEQUENCING_FILE>"
+* wait around 6/7 hours
+
 The output of the script will be in mochiview compatible *.wig files in the mochiview directory
 There are also two pdf containing some statistics of the script.
