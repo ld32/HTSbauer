@@ -14,7 +14,7 @@ the following files:
 To Run the script:
 * Start your ssh session
 * Goto the Directory with your required files
-* run: "source analysis.sh <BAUER_CENTER_SEQUENCING_FILE>"
+* run: "source analysis.sh "BAUER_CENTER_SEQUENCING_FILE" "
 * wait around 6/7 hours
 
 The output of the script will be in mochiview compatible *.wig files in the mochiview directory
