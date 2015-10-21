@@ -10,12 +10,14 @@ the following files:
 * BDGtoWIG.py
 * fastq_trimmer.py
 * a setup.cfg file (check example file)
+** In the setup file don't change the first 3 lines, the next lines should contain the name you want to give your sample
+followed by the Input barcode (eg:BAR40) followed by the IP barcode, each one separated by a tab
 
 To Run the script:
 * Start your ssh session
 * Goto the Directory with your required files
 * run: "source analysis.sh "BAUER_CENTER_SEQUENCING_FILE" "
-* wait around 6/7 hours
+* wait around 6/7 hours (You will receive an email once is over)
 
 The output of the script will be in mochiview compatible *.wig files in the mochiview directory
 There are also two pdf containing some statistics of the script.
