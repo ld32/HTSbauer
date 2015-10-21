@@ -10,7 +10,7 @@ the following files:
 * BDGtoWIG.py
 * fastq_trimmer.py
 * a setup.cfg file (check example file)
-** In the setup file don't change the first 3 lines, the next lines should contain the name you want to give your sample
+** In the setup file don't change the first 3 lines unless you know what you're doing, the next lines should contain the name you want to give your sample
 followed by the Input barcode (eg:BAR40) followed by the IP barcode, each one separated by a tab
 
 The easiest way to have all the files is going to your orchestra directory and running:
@@ -24,4 +24,4 @@ To Run the script:
 * wait around 6/7 hours (You will receive an email once is over)
 
 The output of the script will be in mochiview compatible *.wig files in the mochiview directory
-There are also two pdf containing some statistics of the script.
+There are also two pdf containing some statistics of the script. If something went wrong send me the log.out file so that I can take a look
