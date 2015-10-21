@@ -13,6 +13,10 @@ the following files:
 ** In the setup file don't change the first 3 lines, the next lines should contain the name you want to give your sample
 followed by the Input barcode (eg:BAR40) followed by the IP barcode, each one separated by a tab
 
+The easiest way to have all the files is going to your orchestra directory and running:
+git clone https://github.com/LuisSoares/HTS.git
+And then copy the Bauer Center Raw file to the HTS directory
+
 To Run the script:
 * Start your ssh session
 * Goto the Directory with your required files
