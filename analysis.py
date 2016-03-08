@@ -121,7 +121,7 @@ def sam_tools():
 	for item in files:
 		subprocess.call("samtools import genome.fa.fai {0} {1}bam".format(item,item[:-3]),shell=True)
 		os.remove(item)
-		subprocess.call("samtools sort {0}bam {0}sorted".format(item[:-3]),shell=True)
+		subprocess.call("samtools sort {0}bam -o {0}sorted".format(item[:-3]),shell=True)
 		os.remove(item[:-3]+'bam')
 		subprocess.call("samtools index {0}sorted.bam".format(item[:-3]),shell=True)
 		
