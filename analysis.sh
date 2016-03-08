@@ -1,4 +1,5 @@
 
+module load seq/macs/2.1.0
 module load seq/fastx/0.0.13
 module load dev/python/3.4.2
 module load seq/bowtie/1.1.1
