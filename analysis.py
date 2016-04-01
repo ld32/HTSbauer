@@ -127,6 +127,7 @@ def sam_tools():
 		
 def macs2():
 	subprocess.call('module purge',shell=True)
+	subprocess.call('module load seq/macs/2.1.0',shell=True)
 	subprocess.call('module load dev/python/2.7.6',shell=True)
 	for item in BARCODES:
 		name=item[0]
@@ -135,6 +136,7 @@ def macs2():
 		subprocess.call("macs2 callpeak -t temp/temp_bar_"+sample_bar+"_trim.sorted.bam -c temp/temp_bar_"+input_bar+"_trim.sorted.bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True)
 		
 def wig():
+	subprocess.call('module purge',shell=True)
 	subprocess.call('module load dev/python/3.4.2',shell=True)
 	files=glob.glob('temp/*')
 	input_files=[]
