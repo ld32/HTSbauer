@@ -11,7 +11,7 @@ the following files:
 * fastq_trimmer.py
 * a setup.cfg file (check example file)
 ** In the setup file don't change the first 3 lines unless you know what you're doing, the next lines should contain the name you want to give your sample
-followed by the Input barcode name (eg:BAR40) followed by the IP barcode name, each one separated by a tab
+followed by the Input barcode name (eg:BAR40) followed by the IP barcode name, each one separated by a tab. If you don't have input samples or you have very few reads on the input just put as input bar code the same as your sample barcode (the peak calling won't give you any meaningfull results but without inputs you shouldn't be able to peak call, but you would still have the track pileup)
 
 The easiest way to have all the files is going to your orchestra directory and running:
 git clone https://github.com/LuisSoares/HTS.git
