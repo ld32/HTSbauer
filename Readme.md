@@ -16,7 +16,8 @@ followed by the Input barcode name (eg:BAR40) followed by the IP barcode name, e
 The easiest way to have all the files is going to your orchestra directory and running:
 git clone https://github.com/LuisSoares/HTS.git
 And then copy the Bauer Center Raw file to the HTS directory.
-## Sugestion: Personal folders in orchestra are restricted to 100GB, at one point the analysis will need more than 30GB so it is better that you run the analysis in a folder in the temporary /n/scratch2 filesystem where you have several terabytes available (beware that scratch is only temporary!).
+
+Sugestion: Personal folders in orchestra are restricted to 100GB, at one point the analysis will need more than 30GB so it is better that you run the analysis in a folder in the temporary /n/scratch2 filesystem where you have several terabytes available (beware that scratch is only temporary!).
 
 To Run the script:
 * Start your ssh session
