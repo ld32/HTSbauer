@@ -123,7 +123,7 @@ def batch_fastqc():
 	files=glob.glob('temp/*.html')
 	files.extend(glob.glob('temp/*.zip)'))
 	for item in files:
-		os.rename(item,CURRENT_PATH+'/mochiview/'+os.path.basename(item))
+		os.rename(item,CURRENT_PATH+'/fastqc/'+os.path.basename(item))
 
 def bowtie_align():
 	files=glob.glob('temp/*')
