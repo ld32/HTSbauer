@@ -105,7 +105,20 @@ def trim_fastq():
 	for item in files:
 		subprocess.call("python3.4 fastq_trimmer.py -f {0} -i {1} -o {2}_trim".format(str(len(ALL_BARCODES[item[-5:]])+1),item,item),shell=True)
 		os.remove(item)
+
+def fastqc():
+	files=glob.glob('temp/*')
+	files.remove('temp/temp_bar_unmatched')
+	for item in files:
+		subprocess.call("fastq {0}".format(item),shell=True)
 		
+def batch_fastqc():
+	os.makedirs('fastqc',exist_ok=True)
+	files=glob.glob('temp/*.html')
+	files.extend(glob.glob('temp/*.zip)'))
+	for item in files:
+		os.rename(item,CURRENT_PATH+'/mochiview/'+os.path.basename(item))
+
 def bowtie_align():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
@@ -159,6 +172,8 @@ create_barcode_files(BARCODES)
 os.makedirs('temp', exist_ok=True)
 demultiplexing(ORIGINAL_FILE)
 trim_fastq()
+fastqc()
+batch_fastqc()
 bowtie_align()
 sam_tools()
 macs2()
