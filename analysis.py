@@ -121,7 +121,7 @@ def fastqc():
 			processes=[]
 			proc_files=next(temp)	
 			for item in proc_files:
-				processes.append(subprocess.Popen("fastqc {0}".format(item),shell=True)
+				processes.append(subprocess.Popen("fastqc {0}".format(item),shell=True))
 			exit_codes=[p.wait() for p in processes]
 	except StopIteration:pass
 
@@ -168,7 +168,7 @@ def sam_tools():
 			exit_codes=[p.wait() for p in processes]
 			processes=[]
 			for item in proc_files:
-				processes.append(subprocess.Popen("samtools index {0}sorted.bam".format(item[:-3]),shell=True)
+				processes.append(subprocess.Popen("samtools index {0}sorted.bam".format(item[:-3]),shell=True))
 			exit_codes=[p.wait() for p in processes]
 			for item in proc_files:
 				os.remove(item)
