@@ -116,7 +116,7 @@ def fastqc():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
 	for item in files:
-		subprocess.call("fastq {0}".format(item),shell=True)
+		subprocess.call("fastqc {0}".format(item),shell=True)
 		
 def batch_fastqc():
 	os.makedirs('fastqc',exist_ok=True)
