@@ -121,7 +121,7 @@ def fastqc():
 def batch_fastqc():
 	os.makedirs('fastqc',exist_ok=True)
 	files=glob.glob('temp/*.html')
-	files.extend(glob.glob('temp/*.zip)'))
+	files.extend(glob.glob('temp/*.zip'))
 	for item in files:
 		os.rename(item,CURRENT_PATH+'/fastqc/'+os.path.basename(item))
 
