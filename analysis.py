@@ -115,8 +115,17 @@ def trim_fastq():
 def fastqc():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
-	for item in files:
-		subprocess.call("fastqc {0}".format(item),shell=True)
+	temp=chunks(files,7)
+        temp=chunks(files,7)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				processes.append(subprocess.Popen("fastqc {0}".format(item),shell=True)
+			exit_codes=[p.wait() for p in processes]
+	except StopIteration:pass
+
 		
 def batch_fastqc():
 	os.makedirs('fastqc',exist_ok=True)
@@ -130,30 +139,59 @@ def bowtie_align():
 	files.remove('temp/temp_bar_unmatched')
 	os.makedirs('indexes')
 	copy_tree('/n/data2/hms/bcmp/buratowski/indexes', CURRENT_PATH+'/indexes')
-	for item in files:
-		subprocess.call("bowtie -S -p 8 -m 1 genome {0} {0}.sam".format(item),shell=True)
-		os.remove(item)
-		
+	temp=chunks(files,7)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				processes.append(subprocess.Popen("bowtie -S -p 8 -m 1 genome {0} {0}.sam".format(item),shell=True))
+			exit_codes=[p.wait() for p in processes]
+			for item in proc_files:
+				os.remove(item)
+	except StopIteration:pass
+
+
 def sam_tools():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
-	for item in files:
-		subprocess.call("samtools import genome.fa.fai {0} {1}bam".format(item,item[:-3]),shell=True)
-		os.remove(item)
-		subprocess.call("samtools sort {0}bam {0}sorted".format(item[:-3]),shell=True)
-		os.remove(item[:-3]+'bam')
-		subprocess.call("samtools index {0}sorted.bam".format(item[:-3]),shell=True)
+	temp=chunks(files,7)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				processes.append(subprocess.Popen("samtools import genome.fa.fai {0} {1}bam".format(item,item[:-3]),shell=True))
+			exit_codes=[p.wait() for p in processes]
+			processes=[]
+			for item in proc_files:
+				processes.append(subprocess.Popen("samtools sort {0}bam {0}sorted".format(item[:-3]),shell=True))
+			exit_codes=[p.wait() for p in processes]
+			processes=[]
+			for item in proc_files:
+				processes.append(subprocess.Popen("samtools index {0}sorted.bam".format(item[:-3]),shell=True)
+			exit_codes=[p.wait() for p in processes]
+			for item in proc_files:
+				os.remove(item)
+	except StopIteration:pass
 		
 def macs2():
 	subprocess.call('module purge',shell=True)
 	subprocess.call('module load seq/macs/2.1.0',shell=True)
 	subprocess.call('module load dev/python/2.7.6',shell=True)
-	for item in BARCODES:
-		name=item[0]
-		input_bar=item[1]
-		sample_bar=item[2]
-		subprocess.call("macs2 callpeak -t temp/temp_bar_"+sample_bar+"_trim.sorted.bam -c temp/temp_bar_"+input_bar+"_trim.sorted.bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True)
-		
+	temp=chunks(BARCODES,7)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				name=item[0]
+				input_bar=item[1]
+				sample_bar=item[2]
+				processes.append(subprocess.Popen("macs2 callpeak -t temp/temp_bar_"+sample_bar+"_trim.sorted.bam -c temp/temp_bar_"+input_bar+"_trim.sorted.bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
+			exit_codes=[p.wait() for p in processes]
+	except StopIteration:pass
+
 def wig():
 	subprocess.call('module purge',shell=True)
 	subprocess.call('module load dev/python/3.4.2',shell=True)
@@ -162,8 +200,15 @@ def wig():
 	for item in files:
 		if "treat_pileup" in item:
 			input_files.append(item)
-	for item in input_files:
-		subprocess.call('python3.4 BDGtoWIG.py -i '+item,shell=True)
+	temp=chunks(input_files,7)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				processes.append(subprocess.Popen('python3.4 BDGtoWIG.py -i '+item,shell=True))
+			exit_codes=[p.wait() for p in processes]
+	except StopIteration:pass
 
 def batch_wig():
 	os.makedirs('mochiview',exist_ok=True)
