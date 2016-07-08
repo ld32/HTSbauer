@@ -6,6 +6,12 @@ import glob
 import subprocess
 from distutils.dir_util import copy_tree
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+
 CURRENT_PATH=os.getcwd()
 ORIGINAL_FILE=sys.argv[1]
 ALL_BARCODES={'BAR13':'ATATAGGA',
