@@ -116,7 +116,6 @@ def fastqc():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
 	temp=chunks(files,7)
-        temp=chunks(files,7)
 	try:
 		while True:
 			processes=[]
