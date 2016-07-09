@@ -8,7 +8,7 @@ from distutils.dir_util import copy_tree
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i+n]
 
 
@@ -144,7 +144,7 @@ def bowtie_align():
 			processes=[]
 			proc_files=next(temp)	
 			for item in proc_files:
-				processes.append(subprocess.Popen("bowtie -S -p 8 -m 1 genome {0} {0}.sam".format(item),shell=True))
+				processes.append(subprocess.Popen("bowtie -S -m 1 genome {0} {0}.sam".format(item),shell=True))
 			exit_codes=[p.wait() for p in processes]
 			for item in proc_files:
 				os.remove(item)
