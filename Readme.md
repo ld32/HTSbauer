@@ -30,8 +30,8 @@ To Run the script:
 The script will output the following:
 
 * mochiview directory with wig files ready to load in mochiview
-* fastqc with one html and one zip file for quality controls for which barcode
-* temp file containing the bam files for each barcode
+* fastqc directory with one html and one zip file for quality controls for which barcode
+* temp directory containing the bam files for each barcode as well as the peak calling files for each barcode
 * demultiplex and mapping pdf files with statistics of these two steps
 * log.out file with the entire log of the script run
 
