@@ -17,7 +17,7 @@ The easiest way to have all the files is going to your orchestra directory and r
 git clone https://github.com/LuisSoares/HTS.git
 And then copy the Bauer Center Raw file to the HTS directory.
 
-Update July 2016, the fastest way is now to use the sabre branch of the git repository, using git clone -b sabre https://github.com/LuisSoares/HTS.git
+Update July 2016, the fastest way is now to use the sabre branch of the git repository, using git clone -b sabre https://github.com/LuisSoares/HTS.git (this branch seems stable so it will probably be merged with master soon)
 
 Sugestion: Personal folders in orchestra are restricted to 100GB, at one point the analysis will need more than 30GB so it is better that you run the analysis in a folder in the temporary /n/scratch2 filesystem where you have several terabytes available (beware that scratch is only temporary!).
 
@@ -32,6 +32,7 @@ The script will output the following:
 * mochiview directory with wig files ready to load in mochiview
 * fastqc directory with one html and one zip file for quality controls for which barcode
 * temp directory containing the bam files for each barcode as well as the peak calling files for each barcode
+* a IGV directory with sorted and indexed bam files to load in IGV
 * demultiplex and mapping pdf files with statistics of these two steps
 * log.out file with the entire log of the script run
 
