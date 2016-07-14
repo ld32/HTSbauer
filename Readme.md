@@ -10,6 +10,7 @@ the following files:
 * BDGtoWIG.py
 * fastq_trimmer.py
 * a setup.cfg file (check example file)
+* sizes
 ** In the setup file don't change the first 3 lines unless you know what you're doing, the next lines should contain the name you want to give your sample
 followed by the Input barcode name (eg:BAR40) followed by the IP barcode name, each one separated by a tab. If you don't have input samples or you have very few reads on the input just put as input bar code the same as your sample barcode (the peak calling won't give you any meaningfull results but without inputs you shouldn't be able to peak call, but you would still have the track pileup)
 
@@ -27,12 +28,13 @@ To Run the script:
 * run: "source analysis.sh "BAUER_CENTER_SEQUENCING_FILE" "
 * wait around 6/7 hours (You will receive an email once is over) (less than 1 hour if sabre branch is used)
 
-The script will output the following:
+The script will output the following when using the sabre branch:
 
 * mochiview directory with wig files ready to load in mochiview
+* Jbrowser directory with bigwig files to load in yeast genome database browser
 * fastqc directory with one html and one zip file for quality controls for which barcode
 * temp directory containing the bam files for each barcode as well as the peak calling files for each barcode
-* a IGV directory with sorted and indexed bam files to load in IGV
-* demultiplex and mapping pdf files with statistics of these two steps
+* a IGV directory with sorted and indexed bam files to load in IGV (
+* demultiplex and mapping and duplication pdf files with statistics of these two steps
 * log.out file with the entire log of the script run
 
