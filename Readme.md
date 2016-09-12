@@ -1,7 +1,7 @@
 # Instructions to use HTS pipeline
 This pipeline works for raw files coming from the Bauer center sequencing facility.
 It works in the HMS Orchestra cluster as of 10/20/2015
-## (the master branch is now deprecated and is not been updated and probably won't work correctly, use sabre branch.
+## (IMPORTANT !!!!!!!!!!the master branch is now deprecated and is not been updated and probably won't work correctly, use sabre branch).
 
 Make sure to have in the directory where you plan to analyze the results, aside from the sequencing file,
 the following files:
