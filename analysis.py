@@ -81,41 +81,31 @@ def create_barcode_files(barcodes):
 		needed.append(item[1].upper())
 		needed.append(item[2].upper())
 	needed=set(needed)
-	size8=open('size8.bar','w')
-	size9=open('size9.bar','w')
+	bar=open('barcodes.bar','w')
 	for item in needed:
-		if len(ALL_BARCODES[item])==8:
-			size8.write(item+'\t'+ALL_BARCODES[item]+'\n')
-		elif len(ALL_BARCODES[item])==9:
-			size9.write(item+'\t'+ALL_BARCODES[item]+'\n')
-	size8.close()
-	size9.close()
+		bar.write(ALL_BARCODES[item]+'\t'+'temp_bar_'+item+'\n')
+	bar.close()
 	
 def demultiplexing(ORIGINAL_FILE):
-	exit_code=subprocess.call("zcat {0} | fastx_barcode_splitter.pl --bcfile size8.bar  --prefix temp_bar_ --bol --mismatches {1}".format(ORIGINAL_FILE,DEMULT_PAR), shell=True)  
+	exit_code=subprocess.call("sabre/sabre se -m 1 -f {0} -b barcodes.bar -u temp_bar_unmatched".format(ORIGINAL_FILE), shell=True)  
 	if exit_code!=0:
 		sys.exit()
-	os.rename('temp_bar_unmatched','unmatched')
-	exit_code=subprocess.call("cat {0} | fastx_barcode_splitter.pl --bcfile size9.bar  --prefix temp_bar_ --bol --mismatches {1}".format('unmatched',DEMULT_PAR), shell=True)
-	if exit_code!=0:
-		sys.exit()
-	os.remove('unmatched')
 	files=os.listdir()
 	for item in files:
 		if 'temp_bar_' in item:
 			os.rename(item,CURRENT_PATH+'/temp/'+item)
 			
-def trim_fastq():
-	files=glob.glob('temp/*')
-	files.remove('temp/temp_bar_unmatched')
-	for item in files:
-		subprocess.call("python3.4 fastq_trimmer.py -f {0} -i {1} -o {2}_trim".format(str(len(ALL_BARCODES[item[-5:]])+1),item,item),shell=True)
-		os.remove(item)
+#def trim_fastq():
+#	files=glob.glob('temp/*')
+#	files.remove('temp/temp_bar_unmatched')
+#	for item in files:
+#		subprocess.call("python3.4 fastq_trimmer.py -f {0} -i {1} -o {2}_trim".format(str(len(ALL_BARCODES[item[-5:]])+1),item,item),shell=True)
+#		os.remove(item)
 
 def fastqc():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
-	temp=chunks(files,7)
+	temp=chunks(files,10)
 	try:
 		while True:
 			processes=[]
@@ -136,15 +126,15 @@ def batch_fastqc():
 def bowtie_align():
 	files=glob.glob('temp/*')
 	files.remove('temp/temp_bar_unmatched')
-	os.makedirs('indexes')
-	copy_tree('/n/data2/hms/bcmp/buratowski/indexes', CURRENT_PATH+'/indexes')
-	temp=chunks(files,7)
+	#os.makedirs('indexes')
+	#copy_tree('/n/data2/hms/bcmp/buratowski/indexes', CURRENT_PATH+'/indexes')
+	temp=chunks(files,10)
 	try:
 		while True:
 			processes=[]
 			proc_files=next(temp)	
 			for item in proc_files:
-				processes.append(subprocess.Popen("bowtie -S -m 1 genome {0} {0}.sam".format(item),shell=True))
+				processes.append(subprocess.Popen("bowtie -S -p 4 -m 1 -5 1 genome {0} | samtools view -bS -F 4 - > {0}.bam".format(item),shell=True))
 			exit_codes=[p.wait() for p in processes]
 			for item in proc_files:
 				os.remove(item)
@@ -152,17 +142,13 @@ def bowtie_align():
 
 
 def sam_tools():
-	files=glob.glob('temp/*')
-	files.remove('temp/temp_bar_unmatched')
-	temp=chunks(files,7)
+	files=glob.glob('temp/*.bam')
+	#files.remove('temp/temp_bar_unmatched')
+	temp=chunks(files,10)
 	try:
 		while True:
 			processes=[]
 			proc_files=next(temp)	
-			for item in proc_files:
-				processes.append(subprocess.Popen("samtools import genome.fa.fai {0} {1}bam".format(item,item[:-3]),shell=True))
-			exit_codes=[p.wait() for p in processes]
-			processes=[]
 			for item in proc_files:
 				processes.append(subprocess.Popen("samtools sort {0}bam {0}sorted".format(item[:-3]),shell=True))
 			exit_codes=[p.wait() for p in processes]
@@ -170,15 +156,17 @@ def sam_tools():
 			for item in proc_files:
 				processes.append(subprocess.Popen("samtools index {0}sorted.bam".format(item[:-3]),shell=True))
 			exit_codes=[p.wait() for p in processes]
-			for item in proc_files:
-				os.remove(item)
 	except StopIteration:pass
+	os.makedirs('IGV',exist_ok=True)
+	files=glob.glob('temp/*sorted*')
+	for item in files:
+		os.rename(item,CURRENT_PATH+'/IGV/'+os.path.basename(item))
 		
 def macs2():
 	subprocess.call('module purge',shell=True)
 	subprocess.call('module load seq/macs/2.1.0',shell=True)
 	subprocess.call('module load dev/python/2.7.6',shell=True)
-	temp=chunks(BARCODES,7)
+	temp=chunks(BARCODES,10)
 	try:
 		while True:
 			processes=[]
@@ -187,7 +175,7 @@ def macs2():
 				name=item[0]
 				input_bar=item[1]
 				sample_bar=item[2]
-				processes.append(subprocess.Popen("macs2 callpeak -t temp/temp_bar_"+sample_bar+"_trim.sorted.bam -c temp/temp_bar_"+input_bar+"_trim.sorted.bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
+				processes.append(subprocess.Popen("macs2 callpeak -t temp/temp_bar_"+sample_bar+".bam -c temp/temp_bar_"+input_bar+".bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
 			exit_codes=[p.wait() for p in processes]
 	except StopIteration:pass
 
@@ -199,7 +187,7 @@ def wig():
 	for item in files:
 		if "treat_pileup" in item:
 			input_files.append(item)
-	temp=chunks(input_files,7)
+	temp=chunks(input_files,10)
 	try:
 		while True:
 			processes=[]
@@ -214,6 +202,31 @@ def batch_wig():
 	files=glob.glob('temp/*.wig')
 	for item in files:
 		os.rename(item,CURRENT_PATH+'/mochiview/'+os.path.basename(item))
+		
+def bigwig():
+	files=glob.glob('mochiview/*')
+	subprocess.call('module load seq/UCSC-tools',shell=True)
+	temp=chunks(files,11)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				processes.append(subprocess.Popen("wigToBigWig {0} sizes {0}.bwig".format(item),shell=True))
+			exit_codes=[p.wait() for p in processes]
+	except StopIteration:pass
+
+def batch_bwig():
+	os.makedirs('Jbrowser',exist_ok=True)
+	files=glob.glob('mochiview/*.bwig')
+	for item in files:
+		os.rename(item,CURRENT_PATH+'/Jbrowser/'+os.path.basename(item))
+		
+def duplicate_remove():
+	files=glob.glob('IGV/*.bam')
+	for item in files:
+		name=item[9:18]
+		subprocess.call("java -Xmx1G -jar /opt/picard-1.138/bin/picard.jar MarkDuplicates INPUT={0} OUTPUT={0}nodup.bam METRICS_FILE=IGV/{1}.log REMOVE_DUPLICATES=true ASSUME_SORTED=false".format(item,name),shell=True)
 
 DEMULT_PAR,BOWTIE_PAR,MACS2_PAR,BARCODES=parse_setup('setup.cfg')
 #print(CURRENT_PATH)
@@ -221,7 +234,7 @@ DEMULT_PAR,BOWTIE_PAR,MACS2_PAR,BARCODES=parse_setup('setup.cfg')
 create_barcode_files(BARCODES)
 os.makedirs('temp', exist_ok=True)
 demultiplexing(ORIGINAL_FILE)
-trim_fastq()
+#trim_fastq()
 fastqc()
 batch_fastqc()
 bowtie_align()
@@ -229,5 +242,8 @@ sam_tools()
 macs2()
 wig()
 batch_wig()
+bigwig()
+batch_bwig()
+duplicate_remove()
 
-subprocess.call('python2.7 log_parser.py {}'.format(ORIGINAL_FILE),shell=True)
+subprocess.call('python3.4 log_parser.py {}'.format(ORIGINAL_FILE),shell=True)
