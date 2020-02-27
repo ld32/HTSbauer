@@ -14,6 +14,8 @@ def chunks(l, n):
 
 CURRENT_PATH=os.getcwd()
 ORIGINAL_FILE=sys.argv[1]
+action=sys.argv[2]
+
 ALL_BARCODES={'BAR13':'ATATAGGA',
 			 'BAR14':'AACCGTGT',
 			'BAR15':'AGGTCAGT',
@@ -63,8 +65,6 @@ ALL_BARCODES={'BAR13':'ATATAGGA',
 			'BAR58':'CTAGATTCG',
 			'BAR59':'GAACGCTGA'}
 
-			
-
 def parse_setup(setup):
 	with open(setup) as init:
 		demult_par=init.readline().split(':')[1].rstrip()
@@ -72,9 +72,9 @@ def parse_setup(setup):
 		macs2_par=init.readline().split(':')[1].rstrip()
 		barcodes=[]
 		for line in init:
-			barcodes.append(line.rstrip().split('\t'))
+			barcodes.append(line.rstrip().split())
 	return (demult_par,bowtie_par,macs2_par,barcodes)
-	
+
 def create_barcode_files(barcodes):
 	needed=[]
 	for item in barcodes:
@@ -85,7 +85,7 @@ def create_barcode_files(barcodes):
 	for item in needed:
 		bar.write(ALL_BARCODES[item]+'\t'+'temp_bar_'+item+'\n')
 	bar.close()
-	
+
 def demultiplexing(ORIGINAL_FILE):
 	exit_code=subprocess.call("sabre/sabre se -m 1 -f {0} -b barcodes.bar -u temp_bar_unmatched".format(ORIGINAL_FILE), shell=True)  
 	if exit_code!=0:
@@ -94,15 +94,10 @@ def demultiplexing(ORIGINAL_FILE):
 	for item in files:
 		if 'temp_bar_' in item:
 			os.rename(item,CURRENT_PATH+'/temp/'+item + ".fq")
-			
-def trim_fastq():
-	files=glob.glob('temp/*')
-	files.remove('temp/temp_bar_unmatched')
-	for item in files:
-		subprocess.call("python3.4 fastq_trimmer.py -f {0} -i {1} -o {2}_trim".format(str(len(ALL_BARCODES[item[-5:]])+1),item,item),shell=True)
-		os.remove(item)
 
 def fastqc():
+	if os.path.isfile('qcIsDone.txt'):
+		return
 	files=glob.glob('temp/*.fq')
 	files.remove('temp/temp_bar_unmatched.fq')
 	temp=chunks(files,10)
@@ -113,21 +108,65 @@ def fastqc():
 			for item in proc_files:
 				processes.append(subprocess.Popen("fastqc {0}".format(item),shell=True))
 			exit_codes=[p.wait() for p in processes]
-	except StopIteration:pass
-
-		
-def batch_fastqc():
+	except StopIteration:
+		pass
 	os.makedirs('fastqc',exist_ok=True)
 	files=glob.glob('temp/*.html')
 	files.extend(glob.glob('temp/*.zip'))
 	for item in files:
 		os.rename(item,CURRENT_PATH+'/fastqc/'+os.path.basename(item))
+	os.system("touch qcIsDone.txt")
 
-def bowtie_align():
+def align_spombe(): 
 	files=glob.glob('temp/*.fq')
 	files.remove('temp/temp_bar_unmatched.fq')
-	#os.makedirs('indexes')
-	#copy_tree('/n/data2/hms/bcmp/buratowski/indexes', CURRENT_PATH+'/indexes')
+	temp=chunks(files,1)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				print("working on " + item)
+				#if(os.stat(item).st_size != 0):
+				processes.append(subprocess.Popen("bowtie -S -p 10 indexes/Spombe {0}.fq | samtools import indexes/Spombe.fa.fai - {0}.bam".format(item[:-3]),shell=True))
+			exit_codes=[p.wait() for p in processes]
+			
+	except StopIteration:pass
+
+def split_bams(): 
+	files=glob.glob('temp/*.fq')
+	files.remove('temp/temp_bar_unmatched.fq')
+	temp=chunks(files,5)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				if(os.stat(item).st_size != 0):
+					processes.append(subprocess.Popen("samtools view -b -F4 {0}.bam -o {0}_align.bam".format(item[:-3]),shell=True))
+					processes.append(subprocess.Popen("samtools view -b -f4 {0}.bam -o {0}_unalign.bam".format(item[:-3]),shell=True))
+			exit_codes=[p.wait() for p in processes]
+			
+	except StopIteration:pass
+
+def convert_bam_to_fq(): 
+	files=glob.glob('temp/*.fq')
+	files.remove('temp/temp_bar_unmatched.fq')
+	temp=chunks(files,5)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				if(os.stat(item).st_size != 0):
+					processes.append(subprocess.Popen("bedtools bamtofastq -i temp/{0}_align.bam -fq temp1/{0}_aligned.fq".format(os.path.basename(item)[:-3]),shell=True))
+					processes.append(subprocess.Popen("bedtools bamtofastq -i temp/{0}_unalign.bam -fq temp1/{0}_unalign.fq".format(os.path.basename(item)[:-3]),shell=True))
+			exit_codes=[p.wait() for p in processes]		
+	except StopIteration:pass
+
+def align_genome_aligned():
+	os.system("rm alignedBowtie.log 2>/dev/null")
+	files=glob.glob('temp1/*aligned.fq')
 	temp=chunks(files,1)
 	try:
 		while True:
@@ -135,31 +174,42 @@ def bowtie_align():
 			proc_files=next(temp)	
 			for item in proc_files:
 				if(os.stat(item).st_size != 0):
-					print("bowtie -S -p 10 -m 1 -5 1 indexes/genome {0} | samtools view -bS -F 4 - > {0}.bam".format(item))
-					processes.append(subprocess.Popen("bowtie -S -p 4 -m 1 -5 1 indexes/genome {0} | samtools view -bS -F 4 - > {0}.bam".format(item),shell=True))
+					processes.append(subprocess.Popen("echo working on:{0} >>alignedBowtie.log; bowtie -S -p 10 indexes/genome {0}_aligned.fq 2>>alignedBowtie.log | samtools view -bS -F 4 - > {0}pom_unalign.bam".format(item[:-11]),shell=True))
 			exit_codes=[p.wait() for p in processes]
-			#for item in proc_files:
-			#	os.remove(item)
 	except StopIteration:pass
 
+def align_genome_unaligned():
+	os.system("rm unalignBowtie.log 2>/dev/null") 
+	files=glob.glob('temp1/*unalign.fq')
+	temp=chunks(files,1)
+	try:
+		while True:
+			processes=[]
+			proc_files=next(temp)	
+			for item in proc_files:
+				if(os.stat(item).st_size != 0):
+					processes.append(subprocess.Popen("echo working on:{0} >>unalignBowtie.log; bowtie -S -p 10 -m 1 indexes/genome temp1/{0}_unalign.fq 2>>unalignBowtie.log | samtools view -bS -F 4 - > temp2/{0}.bam".format(os.path.basename(item)[:-11]),shell=True))
+			exit_codes=[p.wait() for p in processes]
+	except StopIteration:pass
+
+
 def sam_tools():
-	files=glob.glob('temp/*.bam')
-	#files.remove('temp/temp_bar_unmatched')
+	files=glob.glob('temp2/*.bam')
 	temp=chunks(files,10)
 	try:
 		while True:
 			processes=[]
 			proc_files=next(temp)	
 			for item in proc_files:
-				processes.append(subprocess.Popen("samtools sort {0}bam {0}sorted".format(item[:-3]),shell=True))
+				processes.append(subprocess.Popen("samtools sort {0}.bam {0}_sorted".format(item[:-4]),shell=True))
 			exit_codes=[p.wait() for p in processes]
 			processes=[]
 			for item in proc_files:
-				processes.append(subprocess.Popen("samtools index {0}sorted.bam".format(item[:-3]),shell=True))
+				processes.append(subprocess.Popen("samtools index {0}_sorted.bam".format(item[:-4]),shell=True))
 			exit_codes=[p.wait() for p in processes]
 	except StopIteration:pass
 	os.makedirs('IGV',exist_ok=True)
-	files=glob.glob('temp/*sorted*')
+	files=glob.glob('temp2/*sorted*')
 	for item in files:
 		os.rename(item,CURRENT_PATH+'/IGV/'+os.path.basename(item))
 		
@@ -176,7 +226,7 @@ def macs2():
 					name=item[0]
 					input_bar=item[1]
 					sample_bar=item[2]
-					processes.append(subprocess.Popen("module load python/2.7.12 macs2/2.1.1.20160309 2>/dev/null; macs2 callpeak -t temp/temp_bar_"+sample_bar+".fq.bam -c temp/temp_bar_"+input_bar+".fq.bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
+					processes.append(subprocess.Popen("module load python/2.7.12 macs2/2.1.1.20160309 2>/dev/null; macs2 callpeak -t temp2/temp_bar_"+sample_bar+".bam -c temp2/temp_bar_"+input_bar+".bam -f BAM -g 12100000 -n temp2/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
 				exit_codes=[p.wait() for p in processes]
 				break
 		except StopIteration:pass
@@ -191,14 +241,14 @@ def macs2():
 				name=item[0]
 				input_bar=item[1]
 				sample_bar=item[2]
-				processes.append(subprocess.Popen("module load python/2.7.12 macs2/2.1.1.20160309 2>/dev/null; macs2 callpeak -t temp/temp_bar_"+sample_bar+".fq.bam -c temp/temp_bar_"+input_bar+".fq.bam -f BAM -g 12100000 -n temp/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
+				processes.append(subprocess.Popen("module load python/2.7.12 macs2/2.1.1.20160309 2>/dev/null; macs2 callpeak -t temp2/temp_bar_"+sample_bar+".bam -c temp2/temp_bar_"+input_bar+".bam -f BAM -g 12100000 -n temp2/"+name+" -B -q 0.01 --nomodel --extsize 150 --SPMR",shell=True))
 			exit_codes=[p.wait() for p in processes]
 	except StopIteration:pass
 
 def wig():
 	#subprocess.call('module purge',shell=True)
 	#subprocess.call('module load dev/python/3.4.2',shell=True)
-	files=glob.glob('temp/*')
+	files=glob.glob('temp2/*')
 	input_files=[]
 	for item in files:
 		if "treat_pileup" in item:
@@ -215,7 +265,7 @@ def wig():
 
 def batch_wig():
 	os.makedirs('mochiview',exist_ok=True)
-	files=glob.glob('temp/*.wig')
+	files=glob.glob('temp2/*.wig')
 	for item in files:
 		os.rename(item,CURRENT_PATH+'/mochiview/'+os.path.basename(item))
 		
@@ -249,11 +299,19 @@ print(CURRENT_PATH)
 print(DEMULT_PAR,BOWTIE_PAR,MACS2_PAR,BARCODES)
 create_barcode_files(BARCODES)
 os.makedirs('temp', exist_ok=True)
+os.makedirs('temp1', exist_ok=True)
+os.makedirs('temp2', exist_ok=True)
 demultiplexing(ORIGINAL_FILE)
-#trim_fastq()
+
+if action == "demultiplexOnly": 
+    quit()
+
 fastqc()
-batch_fastqc()
-bowtie_align()
+align_spombe()
+split_bams()
+convert_bam_to_fq()
+align_genome_aligned()
+align_genome_unaligned()
 sam_tools()
 macs2()
 wig()
@@ -262,4 +320,4 @@ bigwig()
 batch_bwig()
 duplicate_remove()
  
-subprocess.call('module load python/2.7.12 2>/dev/null; python log_parser.py {}'.format(ORIGINAL_FILE),shell=True)
+subprocess.call('module load python/2.7.12 2>/dev/null; python log_parserWithSpikeIn.py {}'.format(ORIGINAL_FILE),shell=True)
