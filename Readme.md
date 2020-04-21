@@ -1,12 +1,17 @@
 This is forked from: LuisSoares/HTSbauer
+
 Added function to take care of spikein library. 
 
 # Instructions to use HTS pipeline
+
 This pipeline works for raw files coming from the Bauer center sequencing facility.
 
 sh analysisWithSpikeIn.sh HJ2_NoIndex.R1.fastq.gz runAll
+
 or
+
 sh analysisWithSpikeIn.sh HJ2_NoIndex.R1.fastq.gz demultiplexOnly
+
 
 Note: this workflow does not normallize the data, only calcuate the spombe/genome ratios.
 
