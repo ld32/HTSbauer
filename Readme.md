@@ -4,28 +4,42 @@ Added function to take care of spikein library.
 # Instructions to use HTS pipeline
 This pipeline works for raw files coming from the Bauer center sequencing facility.
 
-Make sure to have in the directory where you plan to analyze the results, aside from the sequencing file,
-the following files:
-* analysis.sh
-* analysis.py
-* log_parser.py
-* BDGtoWIG.py
-* fastq_trimmer.py
-* a setup.cfg file (check example file)
-** In the setup file don't change the first 3 lines unless you know what you're doing, the next lines should contain the name you want to give your sample
-followed by the Input barcode name (eg:BAR40) followed by the IP barcode name, each one separated by a tab. If you don't have input samples or you have very few reads on the input just put as input bar code the same as your sample barcode (the peak calling won't give you any meaningfull results but without inputs you shouldn't be able to peak call, but you would still have the track pileup)
+sh analysisWithSpikeIn.sh HJ2_NoIndex.R1.fastq.gz runAll
+or
+sh analysisWithSpikeIn.sh HJ2_NoIndex.R1.fastq.gz demultiplexOnly
 
-The easiest way to have all the files is going to your orchestra directory and running:
-git clone https://github.com/LuisSoares/HTS.git
-And then copy the Bauer Center Raw file to the HTS directory.
+Note: this workflow does not normallize the data, only calcuate the spombe/genome ratios.
 
-Sugestion: Personal folders in orchestra are restricted to 100GB, at one point the analysis will need more than 30GB so it is better that you run the analysis in a folder in the temporary /n/scratch2 filesystem where you have several terabytes available (beware that scratch is only temporary!).
 
-To Run the script:
-* Start your ssh session
-* Goto the Directory with your required files
-* run: "source analysis.sh "BAUER_CENTER_SEQUENCING_FILE" "
-* wait around 6/7 hours (You will receive an email once is over)
+For future reference, here is manual version of the workflow. 
 
-The output of the script will be in mochiview compatible *.wig files in the mochiview directory
-There are also two pdf containing some statistics of the script. If something went wrong send me the log.out file so that I can take a look
+After demultiplexing and trimming the fastq files, you need to align each barcode file to pombe, the indexes in the lab folder now include the pombe genome under the name Spombe, so you need to run:
+ 
+bowtie –S –p 8 Spombe <fq file> <sam_file>.sam    #notice that you don’t really need the –m 1
+ 
+from the output you should take the total number of reads, the number of aligned reads and the number of unaligned reads (this numbers are not need anywhere but they are a good sanity check for the later steps), if you don’t want the output in the mail just pass the –o <log_file_name> into the bsub command.
+ 
+Then convert the sam file to bam again using Spombe instead of genome:
+ 
+samtools import Spombe.fa.fai <sam_file> <bam_file>.bam
+ 
+Next you need to separate the bam file into aligned and unaligned reads (for the pombe genome)
+ 
+samtools view –h –b -F4 <bam_file> > <bam_file_aligned>  # the flag –F4 gives you just the aligned alignments
+samtools view –h –b –f4 <bam_file> > <bam_file_unaligned>  # the flag –f4 gives you just the unaligned alignments
+ 
+you then need to import BEDTOOLS, and run the following for both the aligned and unaligned bam files from the previous step
+ 
+bedtools bamtofastq –i <bam_file_aligned> –fq <bam_file_aligned>.fq
+bedtools bamtofastq –i <bam_file_unaligned> –fq <bam_file_unaligned>.fq
+ 
+So now you have two need fastq files, which you are going to use for bowtie with cerevisiae this time:
+ 
+bowtie –S –p 8 genome <bam_file_aligned.fq file> <sam_file>.sam    #notice that you don’t really need the –m 1
+bowtie –S –p 8 –m 1 genome <bam_file_unaligned.fq file> <sam_file>.sam    #notice that you need the –m 1
+ 
+from the output of the first bowtie you will get the aligned number (those will be the ambiguous reads) and the non-aligned reads (those are the
+unambiguously pombe reads)
+from the output of the second bowtie the sum of aligned and multialigned are the unambiguously  cerevisiae reads, the unaligned are the contamination reads (the sam file output of the second bowtie you continue with the normal pipeline, sort, macs, and wig, that will be the non-normalized cerevisiae tracks).
+Now sum the unambiguously pombe and unambiguously cerevisiae reads, those are your total reads, then for the inputs and IPs, calculate pombe/total,
+then for just the IPs divide the Input ratio by the IP ratio, this will be the normalization factor than can be used for each track (this is how they do it in the Winston lab and more or less how it is described in the paper: Biological chromodynamics: a general method for measuring protein occupancy across the genome by calibrating Chip-Seq.), I am actually using the square root of the normalization factor as a normalization factor since it looks much better (I will try to come up with a possible explanation for this, maybe even the square root is not appropriate and maybe it should be adjusted by some statistical function that describes the probability of a read be sequenced). 
