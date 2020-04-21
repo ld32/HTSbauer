@@ -1,6 +1,8 @@
+This is forked from: LuisSoares/HTSbauer
+Added function to take care of spikein library. 
+
 # Instructions to use HTS pipeline
 This pipeline works for raw files coming from the Bauer center sequencing facility.
-It works in the HMS Orchestra cluster as of 10/20/2015
 
 Make sure to have in the directory where you plan to analyze the results, aside from the sequencing file,
 the following files:
